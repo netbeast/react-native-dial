@@ -1,0 +1,33 @@
+{
+  "name": "react-native-dial",
+  "version": "1.0.0",
+  "description": "A react native reusable and efficient dial knob element",
+  "main": "./Dial.js",
+  "license": "MIT",
+  "repository": {
+    "type": "https",
+    "url": "https://github.com/netbeast/react-native-dial"
+  },
+  "keywords": [
+    "dial",
+    "react",
+    "native",
+    "react-native",
+    "android",
+    "ios"
+  ],
+  "dependencies": {
+    "lodash": "^4.15.0",
+    "react": "^15.3.1",
+    "react-native": "^0.36.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.1.0",
+    "babel-plugin-transform-inline-environment-variables": "^6.8.0",
+    "babel-plugin-transform-remove-console": "^6.8.0",
+    "babel-preset-react-native": "^1.9.0",
+    "babel-preset-react-native-stage-0": "^1.0.1",
+    "eslint": "^3.9.1",
+    "eslint-plugin-react": "^6.6.0"
+  }
+}
