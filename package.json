@@ -17,7 +17,7 @@
     "ios"
   ],
   "dependencies": {
-    "lodash": "^4.15.0",
+    "lodash": "^4.15.0"
   },
   "peerDependencies": {
     "react": "^15.3.1",
