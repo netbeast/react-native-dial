@@ -1,31 +1,58 @@
 import React, { Component } from 'react'
 import {
-  View, StyleSheet, Animated, PanResponder, Dimensions
+  Dimensions,
+  PanResponder,
+  Platform,
+  StyleSheet,
+  View
  } from 'react-native'
 import { throttle } from 'lodash'
+
+import {GREY_LIGHT} from '%appStyles'
+
+const {width: screenWidth, height: screenHeight} = Dimensions.get('window')
 
 export class Dial extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      angle: this.props.initialValue,
-      radius: 1
+      startingAngle: this.props.initialAngle,
+      startingRadius: this.props.initialRadius,
+      releaseAngle: this.props.initialAngle,
+      releaseRadius: this.props.initialRadius,
+      angle: this.props.initialAngle,
+      radius: this.props.initialRadius
     }
+    this.offset = {x: 0, y: 0}
     this.updateState = throttle(this._updateState.bind(this), 16)
   }
 
   static defaultProps = {
-    initialValue: 0,
+    initialRadius: 1,
+    initialAngle: 0,
     precision: 0
   }
 
   componentWillMount () {
     this._panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: (e, gestureState) => true,
+      onStartShouldSetPanResponderCapture: (e, gestureState) => {
+        const { deg, radius } = this.calcAngle(e.nativeEvent)
+        this.setState({startingAngle: deg, startingRadius: radius})
+        return true
+      },
       onMoveShouldSetPanResponder: (e, g) => true,
-      onMoveShouldSetPanResponderCapture: (e, g) => true,
+      onMoveShouldSetPanResponderCapture: (e, gestureState) => true,
       onPanResponderGrant: (e, gestureState) => true,
-      onPanResponderMove: (e, gestureState) => this.updateAngle(gestureState),
-      onPanResponderRelease: (e, gestureState) => {}
+      onPanResponderMove: (e, gestureState) => {
+        this.updateAngle(gestureState)
+      },
+      onPanResponderRelease: (e, gestureState) => {
+        this.setState({
+          releaseAngle: this.state.angle,
+          releaseRadius: this.state.radius
+        })
+      }
     })
   }
 
@@ -37,7 +64,8 @@ export class Dial extends Component {
     }
   }
 
-  calcAngle ({pageX, pageY, moveX, moveY}) {
+  calcAngle (gestureState) {
+    const {pageX, pageY, moveX, moveY} = gestureState
     const [x, y] = [pageX || moveX, pageY || moveY]
     const [dx, dy] = [x - this.offset.x, y - this.offset.y]
     return {
@@ -47,37 +75,33 @@ export class Dial extends Component {
   }
 
   _updateState ({deg, radius = this.state.radius}) {
-    if (deg < 0) deg = deg + 360
-
+    radius = this.state.releaseRadius + radius - this.state.startingRadius
     if (radius < this.props.radiusMin) radius = this.props.radiusMin
     else if (radius > this.props.radiusMax) radius = this.props.radiusMax
 
-    this.setState({angle: deg + 10, radius}) // + 10 === Offset para ajustar el toque del dedo
+    deg = deg + this.state.releaseAngle - this.state.startingAngle
+    if (deg < 0) deg = deg + 360
+
+    this.setState({angle: deg, radius})
     this.props.onValueChange(deg, radius)
   }
-
-  // onLayout ({nativeEvent}) {
-  //   console.log('bip')
-  //   const {x, y, width, height} = nativeEvent.layout
-  //   this.offset = {x: x + width / 2, y: y + height / 2}
-  //   this.radius = width / 2
-  //   console.log({onLayout: nativeEvent})
-  // }
 
   componentDidMount () {
     setTimeout(() => {
       this.self.measureInWindow((x, y, width, height) => {
-        this.offset = {x: x + width / 2, y: y + height / 2}
+        this.offset = {
+          x: x + width / 2 - (Platform.OS === 'ios' ? screenWidth : 0),
+          y: y + height / 2
+        }
         this.radius = width / 2
       })
     })
   }
 
   render () {
-    const rotate = this.state.angle + 'deg'
+    const rotate = this.props.fixed ? '0deg' : this.state.angle + 'deg'
     const scale = this.props.elastic ? this.state.radius : 1
 
-    console.log({rotate, scale})
     return (
       <View ref={(node) => { this.self = node}}
         // onLayout={(e) => this.onLayout(e)}
@@ -85,9 +109,9 @@ export class Dial extends Component {
         {...this._panResponder.panHandlers}
       >
         {this.props.children
-          ? <Animated.View style={[this.props.wrapperStyle, {transform: [{rotate}, {scale}]}]}>
+          ? <View style={[this.props.wrapperStyle, {transform: [{rotate}, {scale}]}]}>
             {this.props.children}
-          </Animated.View>
+          </View>
           : <DefaultDial style={this.props.style} rotate={rotate} scale={scale} />
         }
       </View>
@@ -95,47 +119,48 @@ export class Dial extends Component {
   }
 }
 
-const DefaultDial = ({style = {}, rotate, scale}) => (
-  <Animated.View style={[styles.dial, style, {transform: [
+export const DefaultDial = ({style = {}, rotate = '0rad', scale = 1}) => (
+  <View style={[styles.dial, style, {transform: [
     {rotate}, {scale}
   ]}]} >
     <View style={styles.innerDialDecorator}>
       <View style={styles.pointer}/>
     </View>
-  </Animated.View>
+  </View>
 )
-
-var { width } = Dimensions.get('window')
-width = width * 0.425
 
 const styles = StyleSheet.create({
   coverResponder: {
-    padding: 20 // needs a minimum
+    padding: 20, // needs a minimum
   },
   dial: {
     width: 120, height: 120,
     backgroundColor: 'white',
     borderRadius: 60,
-    elevation: 5
+    elevation: 5,
+    shadowColor: GREY_LIGHT,
+    shadowOffset: {width: 1, height: 2},
+    shadowOpacity: 0.8,
+    shadowRadius: 1,
   },
   innerDialDecorator: {
     top: 10, left: 10,
     width: 100, height: 100,
     borderRadius: 50,
     backgroundColor: 'white',
-    elevation: 3
+    elevation: 3,
   },
   pointer: {
     top: 20, left: 20,
     position: 'absolute',
     width: 10, height: 10,
     backgroundColor: 'rgb(221,223,226)',
-    borderRadius: 5
+    borderRadius: 5,
   },
 })
 
 Dial.propTypes = {
   angle: React.PropTypes.number,
   precision: React.PropTypes.number,
-  onValueChange: React.PropTypes.func
+  onValueChange: React.PropTypes.func.isRequired,
 }
