@@ -8,8 +8,7 @@ import {
  } from 'react-native'
 import { throttle } from 'lodash'
 
-import {GREY_LIGHT} from '%appStyles'
-
+const GREY_LIGHT = '#eeeeee'
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window')
 
 export class Dial extends Component {
