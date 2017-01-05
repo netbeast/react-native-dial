@@ -1,4 +1,6 @@
 # react-native-dial
+<img alt="works with yeti" src="works-with-yeti.png" width="100" />
+
 > This package powers [Yeti Smart Home](https://getyeti.co) and is used in production.
 
 A react native reusable and efficient dial knob element.
