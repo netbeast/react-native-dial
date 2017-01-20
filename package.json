@@ -1,6 +1,6 @@
 {
   "name": "react-native-dial",
-  "version": "1000",
+  "version": "1.0.4",
   "description": "A react native reusable and efficient dial knob element",
   "main": "./Dial.js",
   "license": "MIT",
