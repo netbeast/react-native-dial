@@ -89,7 +89,7 @@ export class Dial extends Component {
     setTimeout(() => {
       this.self.measureInWindow((x, y, width, height) => {
         this.offset = {
-          x: x + width / 2,
+          x: x % screenWidth + width / 2,
           y: y + height / 2
         }
         this.radius = width / 2
