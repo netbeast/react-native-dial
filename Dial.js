@@ -1,7 +1,3 @@
-/*
-** @providesModule react-native-dial
-*/
-
 import React, { Component } from 'react'
 import {
   Dimensions,
