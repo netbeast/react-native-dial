@@ -35,6 +35,7 @@ export class Dial extends Component {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: (e, gestureState) => true,
       onStartShouldSetPanResponderCapture: (e, gestureState) => {
+        this.measureOffset() // measure again
         const { deg, radius } = this.calcAngle(e.nativeEvent)
         this.setState({startingAngle: deg, startingRadius: radius})
         return true
@@ -54,7 +55,16 @@ export class Dial extends Component {
     })
   }
 
-  onLayout () {
+  onLayout (nativeEvent) {
+    /*
+    * Multiple measures to avoid the gap between animated
+    * and not animated views
+    */
+    this.measureOffset()
+    setTimeout(() => this.measureOffset(), 200)
+  }
+
+  measureOffset () {
     /*
     * const {x, y, width, height} = nativeEvent.layout
     * onlayout values are different than measureInWindow
@@ -108,7 +118,6 @@ export class Dial extends Component {
       <View
         onLayout={(nativeEvent) => this.onLayout(nativeEvent)}
         ref={(node) => { this.self = node }}
-        // onLayout={(e) => this.onLayout(e)}
         style={[styles.coverResponder, this.props.responderStyle]}
         {...this._panResponder.panHandlers}
       >
