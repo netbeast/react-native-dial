@@ -17,7 +17,7 @@
     "ios"
   ],
   "peerDependencies": {
-    "react": ">=15.3.1",
+    "react": ">=16.0.0",
     "react-native": ">=0.36"
   },
   "devDependencies": {
