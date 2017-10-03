@@ -22,7 +22,7 @@ import { Dial } from 'react-native-dial'
    onValueChange={(a, r) => this.changeBrightness(r)} />
 ```
 
-<img alt="demo screenshot" src="Screen Shot 2017-01-04 at 16.28.38.png" width="350" />
+<img alt="demo screenshot" src="screenshot.png" width="350" />
 
 
 Some properties:
