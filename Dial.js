@@ -4,7 +4,8 @@ import {
   PanResponder,
   StyleSheet,
   View,
- } from 'react-native'
+} from 'react-native'
+import { throttle } from 'lodash'
 
 const GREY_LIGHT = '#eeeeee'
 
@@ -15,7 +16,7 @@ export class Dial extends Component {
     precision: 0,
   }
 
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.state = {
       startingAngle: this.props.initialAngle,
@@ -25,7 +26,8 @@ export class Dial extends Component {
       angle: this.props.initialAngle,
       radius: this.props.initialRadius,
     }
-    this.offset = {x: 0, y: 0}
+    this.offset = { x: 0, y: 0 }
+    this.updateState = throttle(this.updateState.bind(this), 16)
   }
 
   componentWillMount () {
@@ -34,20 +36,29 @@ export class Dial extends Component {
       onStartShouldSetPanResponderCapture: (e, gestureState) => {
         this.measureOffset() // measure again
         const { deg, radius } = this.calcAngle(e.nativeEvent)
-        this.setState({startingAngle: deg, startingRadius: radius})
+        this.setState({ startingAngle: deg, startingRadius: radius })
         return true
       },
       onMoveShouldSetPanResponder: (e, g) => true,
       onMoveShouldSetPanResponderCapture: (e, gestureState) => true,
       onPanResponderGrant: (e, gestureState) => true,
-      onPanResponderMove: (e, gestureState) => requestAnimationFrame(() => {
+      onPanResponderMove: (e, gestureState) => {
         this.updateAngle(gestureState)
-      }),
+      },
       onPanResponderRelease: (e, gestureState) => {
-        this.setState({
-          releaseAngle: this.state.angle,
-          releaseRadius: this.state.radius,
-        })
+        const {
+          angle,
+          radius,
+          releaseAngle,
+          releaseRadius,
+        } = this.state
+
+        if (angle !== releaseAngle || radius !== releaseRadius) {
+          this.setState({
+            releaseAngle: angle,
+            releaseRadius: radius,
+          })
+        }
       },
     })
   }
@@ -80,16 +91,16 @@ export class Dial extends Component {
   }
 
   updateAngle (gestureState) {
-    let {deg, radius} = this.calcAngle(gestureState)
+    let { deg, radius } = this.calcAngle(gestureState)
     if (deg < 0) deg += 360
     if (Math.abs(this.state.angle - deg) > this.props.precision) {
-      this.updateState({deg, radius})
+      this.updateState({ deg, radius })
     }
   }
 
   calcAngle (gestureState) {
-    const {pageX, pageY, moveX, moveY} = gestureState
-    const [x, y] = [pageX || moveX, pageY || moveY]
+    const { pageX, pageY, moveX, moveY } = gestureState
+    const [x, y] = [pageX || moveX, pageY || moveY]
     const [dx, dy] = [x - this.offset.x, y - this.offset.y]
     return {
       deg: Math.atan2(dy, dx) * 180 / Math.PI + 120,
@@ -97,16 +108,18 @@ export class Dial extends Component {
     }
   }
 
-  updateState ({deg, radius = this.state.radius}) {
+  updateState ({ deg, radius = this.state.radius }) {
     radius = this.state.releaseRadius + radius - this.state.startingRadius
     if (radius < this.props.radiusMin) radius = this.props.radiusMin
     else if (radius > this.props.radiusMax) radius = this.props.radiusMax
 
-    deg = deg + this.state.releaseAngle - this.state.startingAngle
+    const angle = deg + this.state.releaseAngle - this.state.startingAngle
     if (deg < 0) deg += 360
 
-    this.setState({angle: deg, radius})
-    if (this.props.onValueChange) this.props.onValueChange(deg, radius)
+    if (angle !== this.state.angle || radius !== this.state.radius) {
+      this.setState({ angle, radius })
+      if (this.props.onValueChange) this.props.onValueChange(angle, radius)
+    }
   }
 
   render () {
@@ -121,7 +134,7 @@ export class Dial extends Component {
         {...this._panResponder.panHandlers}
       >
         {this.props.children
-          ? <View style={[this.props.wrapperStyle, {transform: [{rotate}, {scale}]}]}>
+          ? <View style={[this.props.wrapperStyle, { transform: [{ rotate }, { scale }] }]}>
             {this.props.children}
           </View>
           : <DefaultDial style={this.props.style} rotate={rotate} scale={scale} />
@@ -131,11 +144,13 @@ export class Dial extends Component {
   }
 }
 
-export const DefaultDial = ({style = {}, rotate = '0rad', scale = 1}) => (
+export const DefaultDial = ({ style = {}, rotate = '0rad', scale = 1 }) => (
   <View
-    style={[styles.dial, style, {transform: [
-    {rotate}, {scale},
-    ]}]} >
+    style={[styles.dial, style, {
+      transform: [
+        { rotate }, { scale },
+      ]
+    }]} >
     <View style={styles.innerDialDecorator}>
       <View style={styles.pointer} />
     </View>
@@ -153,7 +168,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     elevation: 5,
     shadowColor: GREY_LIGHT,
-    shadowOffset: {width: 1, height: 2},
+    shadowOffset: { width: 1, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 1,
   },
