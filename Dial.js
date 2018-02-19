@@ -122,6 +122,13 @@ export class Dial extends Component {
     }
   }
 
+  forceUpdate = (deg: number, radius: number) => {
+    this.setState({
+      angle: deg === undefined ? this.state.angle : deg,
+      radius: radius === undefined ? this.state.radius : radius,
+    })
+  }
+
   render () {
     const rotate = this.props.fixed ? '0deg' : `${this.state.angle}deg`
     const scale = this.props.elastic ? this.state.radius : 1
